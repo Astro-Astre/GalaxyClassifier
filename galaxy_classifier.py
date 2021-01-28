@@ -42,7 +42,7 @@ def dataPrepare(file, transform):
     return img
 
 
-def createPackage(model_package):
+def createPackage(model_package: str):
     if not os.path.isdir(model_package):
         os.mkdir(model_package)
 
