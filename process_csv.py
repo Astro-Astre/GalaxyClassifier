@@ -1,6 +1,6 @@
 # -*- coding: utf-8-*-
 import csv
-from turtle import goto
+import sys
 
 import numpy as np
 
@@ -114,17 +114,30 @@ if __name__ == '__main__':
     class_gz2class = class_hdul[1].data['gz2_class']
     class_gz2class = class_gz2class[sort_index].T
 
-    with open(CATALOG + "galaxy_classifier_catalog1.csv", "w", newline='') as csv_file:
+    csv_file_name = CATALOG + "galaxy_classifier_catalog1.csv"
+    with open(csv_file_name, "w", newline='') as csv_file:
         writer = csv.DictWriter(csv_file, ["dr7objid", "ra", "dec",
                                            "redshift", "redshifterr", "gz2_class"])
         writer.writeheader()
-        for i in range(redshift_dr7objid.shape[0]):
+
+    for i in range(redshift_dr7objid.shape[0]):
+        with open(csv_file_name, mode='a', newline='', encoding='utf8') as csv_file:
+            writer = csv.DictWriter(csv_file, ["dr7objid", "ra", "dec",
+                                               "redshift", "redshifterr", "gz2_class"])
+            percent: float = 1.0 * i / redshift_dr7objid.shape[0]  # 用于显示进度
             for j in range(class_dr7objid.shape[0]):
-                if redshift_dr7objid == class_dr7objid:
+                # print(redshift_dr7objid[i], class_dr7objid[j])
+                if redshift_dr7objid[i] == class_dr7objid[j]:
+                    print(type(class_dr7objid[j]))
+                    print(class_dr7objid[j])
                     writer.writerow({"dr7objid": class_dr7objid[j],
-                                     "ra": redshift_ra[i, 0],
-                                     "dec": redshift_dec[i, 1],
-                                     "redshift": redshift[i, 2],
-                                     "redshifterr": redshifterr[i, 3],
+                                     "ra": redshift_ra[i],
+                                     "dec": redshift_dec[i],
+                                     "redshift": redshift[i],
+                                     "redshifterr": redshifterr[i],
                                      "gz2_class": class_gz2class[j]})
                     break
+            print("进度：%.4f" % (percent * 100), "--------%d" % i)
+            sys.stdout.write("进度：%.4f" % (percent * 100))
+            sys.stdout.write("%\r")
+            sys.stdout.flush()
