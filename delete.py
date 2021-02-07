@@ -1,7 +1,11 @@
 # -*- coding: utf-8-*-
 import os
 
-def delete(source,object):
+CATALOG = "D:/Code/MachineLearning/Data/2020.12.15_MergerClassifier/catalog/"
+DATA = "D:/Code/MachineLearning/Data/2020.12.15_MergerClassifier/raw_data/"
+
+
+def remove_missing(source, object):
     object_list = os.listdir(object)
     source_list = os.listdir(source)
     for i in range(len(object_list)):
@@ -13,23 +17,22 @@ def delete(source,object):
         os.remove(source+'/'+ret[i]+'.fits')
 
 
+def remove_incomplete(path, size):
+    object_list = os.listdir(path)
+    for i in range(len(object_list)):
+        if os.path.getsize(path + '/' + object_list[i]) < size:
+            os.remove(path + '/' + object_list[i])
+
+
 if __name__ == "__main__":
-    # delete(r'raw_data\alfalfa\g',r'raw_data\alfalfa\r')
-    # delete(r'raw_data\alfalfa\g',r'raw_data\alfalfa\z')
-    # delete(r'raw_data\alfalfa\z',r'raw_data\alfalfa\g')
-    # delete(r'raw_data\alfalfa\r',r'raw_data\alfalfa\g')
-    # delete(r'raw_data\alfalfa\r',r'raw_data\alfalfa\z')
-    # delete(r'raw_data\alfalfa\z',r'raw_data\alfalfa\r')
-    dir1 = r'classifier_data\train_data\1'
-    dir2 = r'classifier_data\test_data\1'
-    dir_1 = os.listdir(dir1)
-    dir_2 = os.listdir(dir2)
-    for i in range(len(dir_1)):
-        k = dir_1[i].split('_')[0]
-        dir_1[i] = k
-    for i in range(len(dir_2)):
-        dir_2[i] = dir_2[i][:-4]
-    t = dir_1 + dir_2
-    ret = list(set(t))
-    for i in range(len(ret)):
-        os.remove('merger_dat_normal//'+ret[i]+'.dat')
+    data_path = DATA+'fits/all_redshift_under_0.1_galaxy_with_class/'
+    fits_size = 260000
+    remove_incomplete(data_path + 'g', fits_size)
+    remove_incomplete(data_path + 'r', fits_size)
+    remove_incomplete(data_path + 'z', fits_size)
+    remove_missing(data_path + '/g', data_path + '/r')
+    remove_missing(data_path + '/g', data_path + '/z')
+    remove_missing(data_path + '/r', data_path + '/g')
+    remove_missing(data_path + '/r', data_path + '/z')
+    remove_missing(data_path + '/z', data_path + '/g')
+    remove_missing(data_path + '/z', data_path + '/r')
