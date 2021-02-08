@@ -1,6 +1,8 @@
 # -*- coding: utf-8-*-
 import csv
 import sys
+import re
+import time
 
 import numpy as np
 
@@ -37,6 +39,16 @@ def get_class(path: str):
         return label, ra, dec
 
 
+def match_class(data, class_list, label_list):
+    output = 'N'
+    for p in range(len(class_list)):
+        if class_list[p].search(data):
+            output = label_list[p]
+        elif data[:4] == 'Sc?t':
+            output = 'Sc?t'
+    return output
+
+
 class GetFits:
     def __init__(self, filename):
         self.filename = filename
@@ -48,12 +60,18 @@ class GetFits:
 
 
 if __name__ == '__main__':
+    start = time.time()
     # redshift_path内存有325704个星系中部分的红移值
     # class_path内存有239695个GZ2的分类标签
     # 坐标用redshift_path的，精度高一些
     redshift_path: str = CATALOG + "gz2sample.fits"
     class_path: str = CATALOG + "gz2_hart16.fits"
-
+    label_list = [r"Er", r"SBc", r"Sb",
+                  r"Ei", r"Sc2m", r"Sc", r"Ser",
+                  r"Ec", r"Sd", r"SBb", r"Sen"]
+    class_list = [re.compile("Er"), re.compile("SBc"), re.compile("Sb"),
+                  re.compile("Ei"), re.compile("Sc2m"), re.compile('Sc'), re.compile("Ser"),
+                  re.compile("Ec"), re.compile("Sd"), re.compile("SBb"), re.compile("Sen")]
     redshift_hdul = GetFits(redshift_path).openFits()
     # print(redshift_hdul.info())
     class_hdul = GetFits(class_path).openFits()
@@ -87,7 +105,7 @@ if __name__ == '__main__':
     class_gz2class = class_gz2class[sort_index].T
 
     # csv_file_name = CATALOG + "galaxy_classifier_catalog.fits"
-    fits_file_name = CATALOG + "galaxy_classifier_catalog.fits"
+    fits_file_name = CATALOG + "galaxy_fuzzy_classifier_catalog.fits"
 
     fits_dr7objid = []
     fits_ra = []
@@ -95,11 +113,13 @@ if __name__ == '__main__':
     fits_redshift = []
     fits_redshifterr = []
     fits_gz2_class = []
-
+    k = 0
     for i in range(redshift_dr7objid.shape[0]):
+    # for i in range(100):
         percent: float = 1.0 * i / redshift_dr7objid.shape[0]  # 用于显示进度
-        for j in range(class_dr7objid.shape[0]):
+        for j in range(k, class_dr7objid.shape[0]):
             if redshift_dr7objid[i] == class_dr7objid[j]:
+                k = j
                 fits_dr7objid.append(class_dr7objid[j])
                 fits_ra.append(redshift_ra[i])
                 fits_dec.append(redshift_dec[i])
@@ -117,15 +137,45 @@ if __name__ == '__main__':
     # fits_redshift: numpy.float32
     # fits_redshifterr: numpy.float32
     # fits_gz2_class: str
+
+    # 深度拷贝！！
+    fuzzy_gz2_class = fits_gz2_class.copy()
+    for i in range(len(fuzzy_gz2_class)):
+        fuzzy_gz2_class[i] = match_class(fuzzy_gz2_class[i], class_list, label_list)
+
     hdu = fits.BinTableHDU.from_columns([fits.Column(name='dr7objid', format='K', array=fits_dr7objid),
                                          fits.Column(name='ra', format='D', array=fits_ra),
                                          fits.Column(name='dec', format='D', array=fits_dec),
                                          fits.Column(name='redshift', format='D', array=fits_redshift),
                                          fits.Column(name='redshifterr', format='D', array=fits_redshifterr),
                                          fits.Column(name='gz2_class', format='44A', array=fits_gz2_class),
+                                         fits.Column(name='gz2_fuzzy_class', format='44A', array=fuzzy_gz2_class),
                                          ])
-
     hdu.writeto(fits_file_name)
+    print("time cost:", time.time() - start)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     # with open(csv_file_name, "w", newline='') as csv_file:
     #     writer = csv.DictWriter(csv_file, ["dr7objid", "ra", "dec",
