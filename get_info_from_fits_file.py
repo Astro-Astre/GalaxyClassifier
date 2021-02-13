@@ -1,7 +1,6 @@
-# -*- coding: utf-8-*-
+# ,*, coding: utf,8,*,
 import os
-
-import numpy as np
+from astropy.io import fits
 
 CATALOG = "D:/Code/MachineLearning/Data/2020.12.15_MergerClassifier/catalog/"
 DATA = "D:/Code/MachineLearning/Data/2020.12.15_MergerClassifier/raw_data/"
@@ -10,42 +9,29 @@ DATA = "D:/Code/MachineLearning/Data/2020.12.15_MergerClassifier/raw_data/"
 def get_info(path):
     """
     :param path:
-    :return: dr7objid, ra, dec, gz2_class, redshift
+    :return: dr7objid, ra, dec, gz2_fuzzy_class, redshift
     """
     object_dir: list = os.listdir(path)
     ra = []
     dec = []
-    gz2_class = []
+    gz2_fuzzy_class = []
     dr7objid = []
     redshift = []
-    print(object_dir[0].split('-'))
-    k = 0
-    j = 0
-    print(len(object_dir))
     for i in range(len(object_dir)):
     # for i in range(10):
-        if len(object_dir[i].split('-')) == 6:
-            ra.append(float(object_dir[i].split('-')[0].split('=')[1]))
-            dec.append(float(object_dir[i].split('-')[2]))
-            gz2_class.append(object_dir[i].split('-')[3].split('=')[1])
-            dr7objid.append(object_dir[i].split('-')[4].split('=')[1])
-            redshift.append(float(object_dir[i].split('-')[5].split('=')[1][:-5]))
-        elif len(object_dir[i].split('-')) == 5:
-            ra.append(float(object_dir[i].split('-')[0].split('=')[1]))
-            dec.append(float(object_dir[i].split('-')[1].split('=')[1]))
-            gz2_class.append(object_dir[i].split('-')[2].split('=')[1])
-            dr7objid.append(object_dir[i].split('-')[3].split('=')[1])
-            redshift.append(float(object_dir[i].split('-')[4].split('=')[1][:-5]))
-    print(ra)
-    print(dec)
-    print(gz2_class)
-    print(dr7objid)
-    print(redshift)
-    ret = set(sorted(gz2_class))
-    print("Sc+t" in ret)
-    print("Sb+t" in ret)
-    print(len(ret))
-    print(ret)
+        ra.append(float(object_dir[i].split(',')[0].split('=')[1]))
+        dec.append(float(object_dir[i].split(',')[1].split('=')[1]))
+        gz2_fuzzy_class.append(object_dir[i].split(',')[2].split('=')[1])
+        dr7objid.append(object_dir[i].split(',')[3].split('=')[1])
+        redshift.append(float(object_dir[i].split(',')[4].split('=')[1].split('.fits')[0]))
+    fits_file_name = CATALOG + "some_galaxy_fuzzy_classifier_catalog.fits"
+    hdu = fits.BinTableHDU.from_columns([fits.Column(name='dr7objid', format='K', array=dr7objid),
+                                         fits.Column(name='ra', format='D', array=ra),
+                                         fits.Column(name='dec', format='D', array=dec),
+                                         fits.Column(name='redshift', format='D', array=redshift),
+                                         fits.Column(name='gz2_fuzzy_class', format='44A', array=gz2_fuzzy_class),
+                                         ])
+    hdu.writeto(fits_file_name)
 
 
 if __name__ == '__main__':
