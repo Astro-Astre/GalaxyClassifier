@@ -46,6 +46,8 @@ def match_class(data, class_list, label_list):
             output = label_list[p]
         elif data[:4] == 'Sc?t':
             output = 'Sc?t'
+        elif data[:4] == 'Sc2m':
+            output = 'Sc2m'
     return output
 
 
