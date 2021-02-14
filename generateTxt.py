@@ -1,6 +1,6 @@
 # -*- coding: utf-8-*-
 import os
-
+DATA_SOURCE_DIR = r"D:\Code\MachineLearning\Data\2021.02.14_GalaxyClassifier"  # 总数据存放文件夹
 
 def gen_txt(txt_path, img_dir):
     f = open(txt_path, 'w')
@@ -19,5 +19,5 @@ def gen_txt(txt_path, img_dir):
 
 if __name__ == '__main__':
     # txt保存路径，数据保存位置
-    gen_txt(r'train_data.txt', r'D:\Code\MachineLearning\Data\2020.12.15_MergerClassifier\train_data')
-    gen_txt(r'test_data.txt', r'D:\Code\MachineLearning\Data\2020.12.15_MergerClassifier\test_data')
+    gen_txt(r'train_data.txt', DATA_SOURCE_DIR + '/train_data')
+    gen_txt(r'test_data.txt', DATA_SOURCE_DIR + '/test_data')

@@ -11,25 +11,24 @@ from torch.utils.data import DataLoader, Dataset
 from torch.utils.tensorboard import SummaryWriter
 from torchvision import transforms
 
-import fscore
 
 # 配置参数
 torch.manual_seed(1)  # 设置随机数种子，确保结果可重复
 BATCH_SIZE = 64  # 批处理大小
 LEARNING_RATE = 1e-3  # 学习率
 EPOCHES = 50  # 训练次数
-DATA_SOURCE_DIR = r"D:\Code\MachineLearning\Data\2020.12.15_MergerClassifier"  # 总数据存放文件夹
-MODEL_SOURCE_DIR = r"D:\Code\MachineLearning\Model\2020.12.15_MergerClassifier"  # 总模型存放文件夹
+DATA_SOURCE_DIR = r"D:\Code\MachineLearning\Data\2021.02.14_GalaxyClassifier"  # 总数据存放文件夹
+MODEL_SOURCE_DIR = r"D:\Code\MachineLearning\Model\2021.02.14_GalaxyClassifier"  # 总模型存放文件夹
 TRAIN_DATA_TXT_PATH = r'train_data.txt'
 TEST_DATA_TXT_PATH = r'test_data.txt'
 
 
 def changeAxis(data):
-    '''
+    """
     输入即将转换为张量之前的ndarray,要求为C×H×W
-    由于ToTensor会将nadarrayHWC转为CHW
+    由于ToTensor会将ndarrayHWC转为CHW
     要先把ndarray的CHW转为ndarray的HWC.
-    '''
+    """
     img = np.swapaxes(data, 0, 2)
     img = np.swapaxes(img, 0, 1)
     return img
@@ -48,9 +47,9 @@ def createPackage(model_package: str):
 
 
 def modelPackageWrite(info):
-    '''
+    """
     返回文件夹名：model_info_datetime
-    '''
+    """
     model_package = 'model_%s' % (info)
     if not model_package[-1] == '_':
         model_package += '_'
@@ -59,10 +58,10 @@ def modelPackageWrite(info):
 
 
 class MerGalDataset(Dataset):
-    '''
+    """
     重写Dataset以读取dat数据进行训练
     分别输入dat路径和label的txt文件及定义好的transform
-    '''
+    """
 
     def __init__(self, txt_path, transform):
         super(MerGalDataset, self).__init__()
@@ -127,7 +126,7 @@ class Model(nn.Module):
             nn.Dropout(0.5),
             nn.Linear(128, 128, bias=0.01),
             nn.Dropout(0.5),
-            nn.Linear(128, 37, bias=0.1),
+            nn.Linear(128, 12, bias=0.1),
         )
 
     def forward(self, x):
@@ -195,10 +194,6 @@ def trainModel(model_package, flag, last_epoch):
         train_loss = 0  # 训练损失
         train_acc = 0  # 训练准确度
         model.train()
-        tn = 0
-        tp = 0
-        fn = 0
-        fp = 0
         for i, (X, label) in enumerate(train_loader):  # 遍历train_loader
             label = torch.as_tensor(label, dtype=torch.long)
             X, label = X.to(device), label.to(device)
@@ -210,19 +205,9 @@ def trainModel(model_package, flag, last_epoch):
             train_loss += float(lossvalue)  # 计算损失
             _, pred = out.max(1)
             num_correct = (pred == label).sum()
-            for i in range(len(label)):
-                if (label[i] == 1 and pred[i] == 1):
-                    tp += 1
-                if (label[i] == 1 and pred[i] == 0):
-                    fn += 1
-                if (label[i] == 0 and pred[i] == 0):
-                    tn += 1
-                if (label[i] == 0 and pred[i] == 1):
-                    fp += 1
             acc = int(num_correct) / X.shape[0]  # 计算精确度
             train_acc += acc
 
-        fscore.caculate(tp, tn, fp, fn)
         writer.add_scalar('loss', train_loss, echo)
         losses.append(train_loss / len(train_loader))
         access.append(100 * train_acc / len(train_loader))
@@ -238,10 +223,6 @@ def trainModel(model_package, flag, last_epoch):
         eval_loss = 0
         eval_acc = 0
         model.eval()  # 模型转化为评估模式
-        tn = 0
-        tp = 0
-        fn = 0
-        fp = 0
         for X, label in test_loader:
             label = torch.as_tensor(label, dtype=torch.long)
             X, label = X.to(device), label.to(device)
@@ -249,20 +230,11 @@ def trainModel(model_package, flag, last_epoch):
             testloss = loss_func(testout, label)
             eval_loss += float(testloss)
             _, pred = testout.max(1)
-            for i in range(len(label)):
-                if (label[i] == 1 and pred[i] == 1):
-                    tp += 1
-                if (label[i] == 1 and pred[i] == 0):
-                    fn += 1
-                if (label[i] == 0 and pred[i] == 0):
-                    tn += 1
-                if (label[i] == 0 and pred[i] == 1):
-                    fp += 1
+
             num_correct = (pred == label).sum()
             acc = int(num_correct) / X.shape[0]
             eval_acc += acc
 
-        fscore.caculate(tp, tn, fp, fn)
         eval_losses.append(eval_loss / len(test_loader))
         eval_acces.append(eval_acc / len(test_loader))
         print("testloss: " + str(eval_loss / len(test_loader)))
@@ -281,9 +253,12 @@ def trainModel(model_package, flag, last_epoch):
         torch.save(model, '%s/model_%d.model' % (model_package, echo))
         writer.close()
 
+
 def model_accuracy(label, predicted):
     if label == predicted:
         print("%s验证集准确率" % (label),)
+
+
 def verify_model(path, label, model_name):
     pre = os.listdir(path)
     acc_num = 0
@@ -310,8 +285,8 @@ if __name__ == "__main__":
     model.to(device)
     model_package_name = '%s//' % (MODEL_SOURCE_DIR) + modelPackageWrite('normal_')
     # 模型保存文件夹（无需实现创建），是否断点续训，如果断点续寻，上次训练到第几个epoch了
-    model_package_name = r'D:\Code\MachineLearning\Model\2020.12.15_MergerClassifier\model_normal-2021-01-03-085331'
-    trainModel(model_package_name, flag=True, last_epoch=24)
+    # model_package_name = r'D:\Code\MachineLearning\Model\2020.12.15_MergerClassifier\model_normal-2021-01-03-085331'
+    trainModel(model_package_name, flag=False, last_epoch=24)
 
     # verifyModel(r'classifier_data\verify_data\\0', 0, r'model\model_normal-2021-01-01-014012\model_48.model')
     # verifyModel(r'classifier_data\verify_data\\1', 1, r'model\model_normal-2021-01-01-014012\model_48.model')
