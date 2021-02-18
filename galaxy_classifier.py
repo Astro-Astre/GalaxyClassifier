@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader, Dataset
-from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
 from torchvision import transforms
 
 
@@ -21,6 +21,36 @@ DATA_SOURCE_DIR = r"D:\Code\MachineLearning\Data\2021.02.14_GalaxyClassifier"  #
 MODEL_SOURCE_DIR = r"D:\Code\MachineLearning\Model\2021.02.14_GalaxyClassifier"  # 总模型存放文件夹
 TRAIN_DATA_TXT_PATH = r'train_data.txt'
 TEST_DATA_TXT_PATH = r'test_data.txt'
+CLASS_NUM = 12
+
+
+def label_to_num(label):
+    label_num = 0
+    if label == 'Ec':
+        label_num = 0
+    elif label == 'Ei':
+        label_num = 1
+    elif label == 'Er':
+        label_num = 2
+    elif label == 'Merger':
+        label_num = 3
+    elif label == 'Sb':
+        label_num = 4
+    elif label == 'SBb':
+        label_num = 5
+    elif label == 'SBc':
+        label_num = 6
+    elif label == 'Sc':
+        label_num = 7
+    elif label == 'Sc_t':
+        label_num = 8
+    elif label == 'Sd':
+        label_num = 9
+    elif label == 'Sen':
+        label_num = 10
+    elif label == 'Ser':
+        label_num = 11
+    return label_num
 
 
 def changeAxis(data):
@@ -79,11 +109,11 @@ class MerGalDataset(Dataset):
         fn, input_label = self.imgs[index]
         with open(fn, 'rb') as f:
             img = dataPrepare(f, transform=transfer)
-            if input_label == '1':  # merger
-                label = np.array(1)
-            else:
-                label = np.array(0)
-            return img, label
+            # if input_label == '1':  # merger
+            #     label = np.array(1)
+            # else:
+            #     label = np.array(0)
+            return img, label_to_num(input_label)
 
     def __len__(self):
         return len(self.imgs)
@@ -163,8 +193,6 @@ def trainModel(model_package, flag, last_epoch):
     """
     createPackage('%s' % (model_package))
 
-    writer = SummaryWriter(model_package)
-
     loss_func = nn.CrossEntropyLoss()  # 损失函数：交叉熵
     optimizer = optim.SGD(model.parameters(), lr=LEARNING_RATE, momentum=0.9)  # 优化器
     losses = []
@@ -208,7 +236,6 @@ def trainModel(model_package, flag, last_epoch):
             acc = int(num_correct) / X.shape[0]  # 计算精确度
             train_acc += acc
 
-        writer.add_scalar('loss', train_loss, echo)
         losses.append(train_loss / len(train_loader))
         access.append(100 * train_acc / len(train_loader))
         print("echo:" + ' ' + str(echo))
@@ -217,8 +244,6 @@ def trainModel(model_package, flag, last_epoch):
         train_log.write("---------------------------echo---------------------------:" + ' ' + str(echo) + '\n')
         train_log.write("lose:" + ' ' + str(train_loss / len(train_loader)) + '\n')
         train_log.write("accuracy:" + ' ' + str(train_acc / len(train_loader)) + '\n')
-        writer.add_scalar('train_loss', train_loss / len(train_loader), echo)
-        writer.add_scalar('train_acc', train_acc / len(train_loader), echo)
 
         eval_loss = 0
         eval_acc = 0
@@ -226,7 +251,7 @@ def trainModel(model_package, flag, last_epoch):
         for X, label in test_loader:
             label = torch.as_tensor(label, dtype=torch.long)
             X, label = X.to(device), label.to(device)
-            testout, conv1, conv2, conv3, conv4 = model(X)
+            testout = model(X)
             testloss = loss_func(testout, label)
             eval_loss += float(testloss)
             _, pred = testout.max(1)
@@ -241,8 +266,6 @@ def trainModel(model_package, flag, last_epoch):
         print("testaccuracy:" + str(eval_acc / len(test_loader)) + '\n')
         train_log.write("testloss: " + str(eval_loss / len(test_loader)) + '\n')
         train_log.write("testaccuracy:" + str(eval_acc / len(test_loader)) + '\n' + '\n')
-        writer.add_scalar('test_loss', eval_loss / len(test_loader), echo)
-        writer.add_scalar('test_acc', eval_acc / len(test_loader), echo)
         checkpoint = {
             "net": model.state_dict(),
             'optimizer': optimizer.state_dict(),
@@ -251,7 +274,6 @@ def trainModel(model_package, flag, last_epoch):
         createPackage('%s/checkpoint' % (model_package))
         torch.save(checkpoint, '%s/checkpoint/ckpt_best_%s.pth' % (model_package, str(echo)))
         torch.save(model, '%s/model_%d.model' % (model_package, echo))
-        writer.close()
 
 
 def model_accuracy(label, predicted):
