@@ -109,10 +109,6 @@ class MerGalDataset(Dataset):
         fn, input_label = self.imgs[index]
         with open(fn, 'rb') as f:
             img = dataPrepare(f, transform=transfer)
-            # if input_label == '1':  # merger
-            #     label = np.array(1)
-            # else:
-            #     label = np.array(0)
             return img, label_to_num(input_label)
 
     def __len__(self):
@@ -248,15 +244,96 @@ def trainModel(model_package, flag, last_epoch):
         eval_loss = 0
         eval_acc = 0
         model.eval()  # 模型转化为评估模式
+        num_0 = 0
+        num_1 = 0
+        num_2 = 0
+        num_3 = 0
+        num_4 = 0
+        num_5 = 0
+        num_6 = 0
+        num_7 = 0
+        num_8 = 0
+        num_9 = 0
+        num_10 = 0
+        num_11 = 0
+        sum_0 = 0
+        sum_1 = 0
+        sum_2 = 0
+        sum_3 = 0
+        sum_4 = 0
+        sum_5 = 0
+        sum_6 = 0
+        sum_7 = 0
+        sum_8 = 0
+        sum_9 = 0
+        sum_10 = 0
+        sum_11 = 0
         for X, label in test_loader:
             label = torch.as_tensor(label, dtype=torch.long)
             X, label = X.to(device), label.to(device)
+            # print(label)
+            print("type(label):", type(label))
+            print("label[0]:", label[0])
+            print("type(label[0]):", type(label[0]))
             testout = model(X)
             testloss = loss_func(testout, label)
             eval_loss += float(testloss)
             _, pred = testout.max(1)
-
+            # print(pred)
+            print("type(pred):", type(pred))
+            print("pred[0]:", pred[0])
+            print("type(pred[0]):", type(pred[0]))
             num_correct = (pred == label).sum()
+            for i in range(len(pred)):
+                if pred[i] == 0 and label[i] == 0:
+                    sum_0 += 1
+                elif pred[i] == 1 and label[i] == 1:
+                    sum_1 += 1
+                elif pred[i] == 2 and label[i] == 2:
+                    sum_2 += 1
+                elif pred[i] == 3 and label[i] == 3:
+                    sum_3 += 1
+                elif pred[i] == 4 and label[i] == 4:
+                    sum_4 += 1
+                elif pred[i] == 5 and label[i] == 5:
+                    sum_5 += 1
+                elif pred[i] == 6 and label[i] == 6:
+                    sum_6 += 1
+                elif pred[i] == 7 and label[i] == 7:
+                    sum_7 += 1
+                elif pred[i] == 8 and label[i] == 8:
+                    sum_8 += 1
+                elif pred[i] == 9 and label[i] == 9:
+                    sum_9 += 1
+                elif pred[i] == 10 and label[i] == 10:
+                    sum_10 += 1
+                elif pred[i] == 11 and label[i] == 11:
+                    sum_11 += 1
+            for j in range(len(label)):
+                if label[j] == 0:
+                    num_0 += 1
+                elif label[j] == 1:
+                    num_1 += 1
+                elif label[j] == 2:
+                    num_2 += 1
+                elif label[j] == 3:
+                    num_3 += 1
+                elif label[j] == 4:
+                    num_4 += 1
+                elif label[j] == 5:
+                    num_5 += 1
+                elif label[j] == 6:
+                    num_6 += 1
+                elif label[j] == 7:
+                    num_7 += 1
+                elif label[j] == 8:
+                    num_8 += 1
+                elif label[j] == 9:
+                    num_9 += 1
+                elif label[j] == 10:
+                    num_10 += 1
+                elif label[j] == 11:
+                    num_11 += 1
             acc = int(num_correct) / X.shape[0]
             eval_acc += acc
 
@@ -264,8 +341,37 @@ def trainModel(model_package, flag, last_epoch):
         eval_acces.append(eval_acc / len(test_loader))
         print("testloss: " + str(eval_loss / len(test_loader)))
         print("testaccuracy:" + str(eval_acc / len(test_loader)) + '\n')
+        print("SUM:", (sum_0 + sum_1 + sum_2 + sum_3 + sum_4 + sum_5 + sum_6 + sum_7
+                       + sum_8 + sum_9 + sum_10 + sum_11))
+        print("NUM:", (num_0 + num_1 + num_2 + num_3 + num_4 + num_5 + num_6 + num_7
+                       + num_8 + num_9 + num_10 + num_11))
+        print('Ec:' + str(sum_0 / num_0))
+        print('Ei:' + str(sum_1 / num_1))
+        print('Er:' + str(sum_2 / num_2))
+        print('Merger:' + str(sum_3 / num_3))
+        print('Sb:' + str(sum_4 / num_4))
+        print('SBb:' + str(sum_5 / num_5))
+        print('SBc:' + str(sum_6 / num_6))
+        print('Sc:' + str(sum_7 / num_7))
+        print('Sc_t:' + str(sum_8 / num_8))
+        print('Sd:' + str(sum_9 / num_9))
+        print('Sen:' + str(sum_10 / num_10))
+        print('Ser：' + str(sum_11 / num_11))
         train_log.write("testloss: " + str(eval_loss / len(test_loader)) + '\n')
-        train_log.write("testaccuracy:" + str(eval_acc / len(test_loader)) + '\n' + '\n')
+        train_log.write("testaccuracy:" + str(eval_acc / len(test_loader)) + '\n')
+        train_log.write('Ec:' + str(sum_0 / num_0) + '\n')
+        train_log.write('Ei：' + str(sum_1 / num_1) + '\n')
+        train_log.write('Er：' + str(sum_2 / num_2) + '\n')
+        train_log.write('Merger：' + str(sum_3 / num_3) + '\n')
+        train_log.write('Sb：' + str(sum_4 / num_4) + '\n')
+        train_log.write('SBb：' + str(sum_5 / num_5) + '\n')
+        train_log.write('SBc:' + str(sum_6 / num_6) + '\n')
+        train_log.write('Sc:' + str(sum_7 / num_7) + '\n')
+        train_log.write('Sc_t:' + str(sum_8 / num_8) + '\n')
+        train_log.write('Sd:' + str(sum_9 / num_9) + '\n')
+        train_log.write('Sen:' + str(sum_10 / num_10) + '\n')
+        train_log.write('Ser:' + str(sum_11 / num_11) + '\n')
+        train_log.write("----------------------------------------------------------" + '\n' + '\n')
         checkpoint = {
             "net": model.state_dict(),
             'optimizer': optimizer.state_dict(),
